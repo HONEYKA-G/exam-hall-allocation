@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Student</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      .my-form {
+        margin: 50px auto;
+        max-width: 600px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .custom-div {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      .custom-div .d-flex {
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+         /* Sidebar Navigation Styles */
+        .sidebar {
+            background-color: #333333;
+            color: white;
+            min-height: 100vh;
+            width: 250px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding-top: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 30px 20px;
+            border-bottom: 2px solid #555555;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h3 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: white;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin: 0;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-nav a:hover {
+            background-color: #555555;
+            border-left-color: #007bff;
+            padding-left: 25px;
+        }
+
+        .sidebar-nav a.active {
+            background-color: #007bff;
+            border-left-color: #0056b3;
+        }
+
+        .sidebar-nav i {
+            width: 25px;
+            margin-right: 15px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .top-header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-header h1 {
+            margin: 0;
+            color: #333333;
+        }
+
+        .content-area {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                min-height: auto;
+                box-shadow: none;
+                border-bottom: 2px solid #555555;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar-nav a {
+                display: inline-block;
+                width: auto;
+                padding: 10px 15px;
+            }
+
+            .sidebar-nav a i {
+                margin-right: 8px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #333333;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #555555;
+            border-radius: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #777777;
+        }
+      /* Header Styles */
+      .page-header {
+        background-color: #333333;
+        color: white;
+        padding: 30px 20px;
+        margin: 0;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .page-header h1 {
+        margin: 0 0 10px 0;
+        font-size: 2rem;
+        font-weight: bold;
+      }
+
+      .page-header p {
+        margin: 0;
+        font-size: 1rem;
+        opacity: 0.9;
+      }
+
+      /* Footer Styles */
+      .page-footer {
+        background-color: #333333;
+        color: white;
+        padding: 30px 20px;
+        text-align: center;
+        margin-top: 50px;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .page-footer p {
+        margin: 10px 0;
+        font-size: 0.95rem;
+      }
+
+      .page-footer a {
+        color: #87ceeb;
+        text-decoration: none;
+      }
+
+      .page-footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page-header">
+    <div class="header-content">
+      <h1>Admin Dashboard</h1>
+      <p>College Name**</p>
+    </div>
+  </header>
+    <div id="loadingScreen" class="loading-screen">
+      <div class="loading-icon"></div>
+    </div>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-book"></i>&nbsp;Home</h3>
+        </div>
+        <nav>
+            <ul class="sidebar-nav">
+                <li><a href="/admin" class="active"><i class="fas fa-chart-line"></i> Home</a></li>
+                <li><a href="/student/login"><i class="fas fa-users"></i> Students</a></li>
+                <li><a href="/uploaddata"><i class="fas fa-upload"></i> Upload Data</a></li>
+                <li><a href="/timetable"><i class="fas fa-calendar"></i> Timetable</a></li>
+                <li><a href="/class"><i class="fas fa-chair"></i> Class</a></li>
+                <li><a href="/seating"><i class="fas fa-chair"></i> Seating Arrangement</a></li>
+                <li><a href="/viewseating"><i class="fas fa-file-alt"></i> View Seating</a></li>
+                <li><a href="/viewtimetable"><i class="fas fa-file-alt"></i> View Timetable</a></li>
+                <li><a href="/viewdata"><i class="fas fa-file-alt"></i> View Data</a></li>
+                <li><a href="/reset"><i class="fas fa-cog"></i> Reset</a></li>
+                <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+    <!-- <div class="container py-3">
+      <header>
+        <div
+          class="d-flex flex-column flex-md-row align-items-center pb-3 mb-4 border-bottom"
+        >
+          <a
+            href="#"
+            class="d-flex align-items-center link-body-emphasis text-decoration-none"
+          >
+            <span class="fs-4">Student Page</span>
+          </a>
+
+          <nav class="d-inline-flex mt-2 mt-md-0 ms-md-auto">
+            <a
+              class="me-3 py-2 link-body-emphasis text-decoration-none"
+              href="/"
+              >Home</a
+            >
+          </nav>
+        </div>
+      </header>
+    </div> -->
+
+    <form action="/student" method="POST" class="my-form">
+      <div class="custom-div">
+        <div class="d-flex justify-content-between">
+          <label for="roll_num">Roll Number:</label>
+          <input
+            type="text"
+            class="form-control"
+            name="roll_num"
+            id="roll_num"
+            placeholder="Enter roll number"
+            size="4"
+          />
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </div>
+      {% if roll_num %}
+      <div class="mt-4">
+        <h5>Exam Hall Details:</h5>
+        <table class="table my-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Subject</th>
+              <th>Seat Number</th>
+              <th>Classroom</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for seat in seat_num %}
+            <tr>
+              <td>{{ seat[0]['date'] }}</td>
+              <td>{{ seat[0]['subject'] }}</td>
+              <td>{{ seat[0]['seatnum'] }}</td>
+              <td>{{ seat[0]['classroom'] }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </form>
+    <!-- Footer -->
+<footer class="page-footer">
+  <div class="footer-content">
+    <p>&copy; 2026 Exam Seating Arrangement System. All rights reserved.</p>
+    <p>For support, contact: <a href="mailto:admin@example.com">admin@example.com</a></p>
+  </div>
+</footer>
+  </body>
+</html>

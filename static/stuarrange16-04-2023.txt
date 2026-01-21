@@ -1,0 +1,220 @@
+[
+    {
+        "class_name": "ADM 303",
+        "column": 6,
+        "rows": 7,
+        "a": [
+            12016001,
+            12016003,
+            12016004,
+            12016005,
+            12016006,
+            12016007,
+            12016008,
+            12016009,
+            12016010,
+            12016011,
+            12016012,
+            12016013,
+            12016014,
+            12016015,
+            12016016,
+            12016017,
+            12016018,
+            12016020,
+            12016019,
+            12016021,
+            12016022
+        ],
+        "b": [
+            12115002,
+            12115003,
+            12115005,
+            12115001,
+            12115006,
+            12115007,
+            12115008,
+            12115009,
+            12115010,
+            12115011,
+            12115012,
+            12115013,
+            12115014,
+            12115015,
+            12115016,
+            12115017,
+            12115018,
+            12115019,
+            12115020,
+            12115021,
+            12115022
+        ]
+    },
+    {
+        "class_name": "ADM 304",
+        "column": 8,
+        "rows": 3,
+        "a": [
+            12016024,
+            12016025,
+            12016026,
+            12115023,
+            12115024,
+            12115025,
+            12115026,
+            12115027,
+            12115028,
+            12115029,
+            12115031,
+            12115030
+        ],
+        "b": []
+    },
+    {
+        "class_name": "ADM 305",
+        "column": 7,
+        "rows": 3,
+        "a": [
+            12115032,
+            12115033,
+            12115034,
+            12115035
+        ],
+        "b": []
+    },
+    {
+        "class_name": "ADM 306",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "ADM 307",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "ADM 308",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "ADM 309",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "ADM 310",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "ADM 311",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 206",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 306",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 401",
+        "column": 8,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 304",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 303",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 104",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 103",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 203",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 204",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 415",
+        "column": 8,
+        "rows": 15
+    },
+    {
+        "class_name": "WAB 206",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 105",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 107",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 207",
+        "column": 8,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 212",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 210",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 211",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 205",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 305",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 303",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 403",
+        "column": 7,
+        "rows": 3
+    }
+]

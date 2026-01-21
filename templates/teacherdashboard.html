@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f5f5f5; }
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .stat-card i {
+            font-size: 40px;
+            color: #667eea;
+            margin-right: 15px;
+        }
+        .content-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .subject-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+            display: block;
+            margin-bottom: 15px;
+        }
+        .subject-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+            color: #333;
+        }
+        .subject-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+        }
+        .subject-btn h5 { margin-bottom: 10px; font-weight: 600; }
+        .subject-btn .count { font-size: 24px; font-weight: bold; }
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .table-card table { margin-bottom: 0; }
+        .table-card tbody tr:hover { background-color: #f5f5f5; }
+        .btn-view {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .btn-view:hover { background-color: #764ba2; color: white; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-graduation-cap"></i> Teacher Dashboard
+            </span>
+            <div>
+                <span class="text-white me-3">
+                    <i class="fas fa-user"></i> {{ teacher_name }}
+                </span>
+                <a href="{{ url_for('teacher_logout') }}" class="btn btn-danger btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-5">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1><i class="fas fa-chalkboard-user"></i> Welcome, {{ teacher_name }}!</h1>
+            <p>College Exam Subjects & Students Management</p>
+        </div>
+
+        <!-- Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if 'error' in category %}danger{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <i class="fas fa-book"></i>
+                    <div class="d-inline-block">
+                        <h5>Total Subjects</h5>
+                        <p class="mb-0" style="font-size: 24px; font-weight: bold;">{{ all_subjects|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <div class="d-inline-block">
+                        <h5>Selected Students</h5>
+                        <p class="mb-0" style="font-size: 24px; font-weight: bold;">{{ subject_count }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <i class="fas fa-graduation-cap"></i>
+                    <div class="d-inline-block">
+                        <h5>Total Students</h5>
+                        <p class="mb-0" style="font-size: 24px; font-weight: bold;">{{ total_students }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subjects -->
+        <div class="content-card">
+            <h3 class="mb-4"><i class="fas fa-book-open"></i> Select a Subject</h3>
+            <div class="row">
+                {% for item in subject_stats %}
+                    <div class="col-md-4">
+                        <a href="{{ url_for('teacher_dashboard', subject=item.name) }}" class="subject-btn">
+                            <h5><i class="fas fa-chalkboard"></i> {{ item.name }}</h5>
+                            <p class="count mb-0">{{ item.count }} Students</p>
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info w-100">
+                        <i class="fas fa-info-circle"></i> No subjects available yet.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        {% if selected_subject %}
+            <div class="table-card">
+                <h3 class="mb-4"><i class="fas fa-list"></i> Students - {{ selected_subject }}</h3>
+                {% if students %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead style="background-color: #667eea; color: white;">
+                                <tr>
+                                    <th>Roll No.</th>
+                                    <th>Name</th>
+                                    <th>Class</th>
+                                    <th>Year</th>
+                                    <th>Seat No.</th>
+                                    <th>Classroom</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                    <tr>
+                                        <td>{{ student.rollnum }}</td>
+                                        <td>{{ student.name }}</td>
+                                        <td>{{ student.sheet_name }}</td>
+                                        <td>{{ student.Year }}</td>
+                                        <td>{% if student.seatnum %}{{ student.seatnum }}{% else %}-{% endif %}</td>
+                                        <td>{% if student.classroom %}{{ student.classroom }}{% else %}-{% endif %}</td>
+                                        <td>
+                                            <a href="{{ url_for('teacher_view_student', roll_num=student.rollnum) }}" class="btn-view">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No students for this subject.
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="content-card">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-arrow-up"></i> Please select a subject above to view students
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+[
+    {
+        "class_name": "ADM 303",
+        "column": 6,
+        "rows": 7,
+        "a": [
+            12117001,
+            12117002,
+            12117003,
+            12117004,
+            12117005,
+            12117006,
+            12117007,
+            12117008,
+            12117009,
+            12117010,
+            12117011,
+            12117012,
+            12117013,
+            12117014,
+            12117015,
+            12117016,
+            12117017,
+            12117018,
+            12117019,
+            12117020,
+            12117021
+        ],
+        "b": []
+    },
+    {
+        "class_name": "ADM 304",
+        "column": 8,
+        "rows": 3,
+        "a": [
+            12117022,
+            12117023,
+            12117024,
+            12117025,
+            12117026,
+            12117027,
+            12117028,
+            12117029,
+            12117030,
+            12117031,
+            12117032,
+            12117033
+        ],
+        "b": []
+    },
+    {
+        "class_name": "ADM 305",
+        "column": 7,
+        "rows": 3,
+        "a": [
+            12117034,
+            12117035,
+            12117036,
+            12117037,
+            12117038,
+            12117039,
+            12117040,
+            12117041,
+            12117042,
+            12117043,
+            12117044,
+            12117045
+        ],
+        "b": []
+    },
+    {
+        "class_name": "ADM 306",
+        "column": 7,
+        "rows": 3,
+        "a": [
+            12117046,
+            12117047,
+            12117048,
+            12117049,
+            12117050,
+            12117051,
+            12117052
+        ],
+        "b": []
+    },
+    {
+        "class_name": "ADM 307",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "ADM 308",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "ADM 309",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "ADM 310",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "ADM 311",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 206",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 306",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 401",
+        "column": 8,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 304",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 303",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 104",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 103",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 203",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 204",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "EAB 415",
+        "column": 8,
+        "rows": 15
+    },
+    {
+        "class_name": "WAB 206",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 105",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 107",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 207",
+        "column": 8,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 212",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 210",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 211",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 205",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 305",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 303",
+        "column": 7,
+        "rows": 3
+    },
+    {
+        "class_name": "WAB 403",
+        "column": 7,
+        "rows": 3
+    }
+]
