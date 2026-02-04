@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
-"""
-Script to insert dummy teacher data into MongoDB
-Run this once to populate the teacher collection with test data
-"""
-
 from pymongo import MongoClient
 
-# Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
 db = client.Studetails
 teacher_collection = db.teacher
 
-# Dummy teacher data with invigilation halls
 teachers = [
     {
         "username": "teacher1",
@@ -45,7 +38,6 @@ teachers = [
     }
 ]
 
-# Clear existing teachers and insert new ones
 try:
     teacher_collection.delete_many({})
     result = teacher_collection.insert_many(teachers)

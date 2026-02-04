@@ -1,0 +1,246 @@
+"""
+Sample output demonstration for the Exam Seating Arrangement System
+"""
+
+sample_students = [
+    {
+        "rollnum": 11913001,
+        "name": "ASWIN VM",
+        "Year": "FourthYear",
+        "seatnum": [
+            {
+                "date": "24-04-2023",
+                "seatnum": "AL1",
+                "bench_number": 1,
+                "column_letter": "A",
+                "side": "Left",
+                "classroom": "EAB 415",
+                "subject": "Electromagnetic Theory"
+            },
+            {
+                "date": "25-02-2023",
+                "seatnum": "AR2",
+                "bench_number": 2,
+                "column_letter": "A",
+                "side": "Right",
+                "classroom": "EAB 415",
+                "subject": "Renewable Energy Sources"
+            }
+        ]
+    },
+    {
+        "rollnum": 11913002,
+        "name": "AVARNYA SABU",
+        "Year": "FourthYear",
+        "seatnum": [
+            {
+                "date": "24-04-2023",
+                "seatnum": "AR1",
+                "bench_number": 1,
+                "column_letter": "A",
+                "side": "Right",
+                "classroom": "EAB 415",
+                "subject": "Electromagnetic Theory"
+            }
+        ]
+    },
+    {
+        "rollnum": 12118001,
+        "name": "ADEEB BABU",
+        "Year": "SecondYear",
+        "seatnum": [
+            {
+                "date": "24-04-2023",
+                "seatnum": "BL1",
+                "bench_number": 1,
+                "column_letter": "B",
+                "side": "Left",
+                "classroom": "EAB 415",
+                "subject": "Robot Programming"
+            }
+        ]
+    },
+    {
+        "rollnum": 12118002,
+        "name": "ADITHYA DINESH RAO",
+        "Year": "SecondYear",
+        "seatnum": [
+            {
+                "date": "24-04-2023",
+                "seatnum": "BR1",
+                "bench_number": 1,
+                "column_letter": "B",
+                "side": "Right",
+                "classroom": "EAB 415",
+                "subject": "Robot Programming"
+            }
+        ]
+    },
+    {
+        "rollnum": 12118003,
+        "name": "ALAN GEORGE SHIBU",
+        "Year": "SecondYear",
+        "seatnum": [
+            {
+                "date": "24-04-2023",
+                "seatnum": "BL2",
+                "bench_number": 2,
+                "column_letter": "B",
+                "side": "Left",
+                "classroom": "EAB 415",
+                "subject": "Robot Programming"
+            }
+        ]
+    },
+    {
+        "rollnum": 12118004,
+        "name": "ANN MARY SHAJI",
+        "Year": "SecondYear",
+        "seatnum": [
+            {
+                "date": "24-04-2023",
+                "seatnum": "BR2",
+                "bench_number": 2,
+                "column_letter": "B",
+                "side": "Right",
+                "classroom": "EAB 415",
+                "subject": "Robot Programming"
+            }
+        ]
+    }
+]
+
+sample_teacher = {
+    "username": "teacher_eab415",
+    "password": "demo123",
+    "name": "Dr. John Smith",
+    "invigilation_hall": "EAB 415"
+}
+
+print("=" * 100)
+print("EXAM SEATING ARRANGEMENT SYSTEM - SAMPLE OUTPUT")
+print("=" * 100)
+print()
+
+print("TEACHER LOGIN:")
+print("-" * 100)
+print(f"Username: {sample_teacher['username']}")
+print(f"Hall: {sample_teacher['invigilation_hall']}")
+print()
+
+print("CLASSROOM SEATING TABLE - DATE: 24-04-2023 (HALL: EAB 415)")
+print("-" * 100)
+print()
+
+# Build seating grid
+date_filter = "24-04-2023"
+seating_grid = {}
+
+for student in sample_students:
+    for seat in student.get('seatnum', []):
+        if seat.get('date') == date_filter:
+            row = seat.get('bench_number')
+            col = seat.get('column_letter')
+            side = seat.get('side')[0]
+            
+            if row not in seating_grid:
+                seating_grid[row] = {}
+            if col not in seating_grid[row]:
+                seating_grid[row][col] = {}
+            
+            seating_grid[row][col][side] = {
+                'rollnum': student.get('rollnum'),
+                'name': student.get('name'),
+                'subject': seat.get('subject')
+            }
+
+columns = sorted(set([col for row_dict in seating_grid.values() for col in row_dict.keys()]))
+max_row = max(seating_grid.keys()) if seating_grid else 0
+
+# Print table
+print("ROW" + " " * 16 + "|".join([f"  {col}  " for col in columns]))
+print("-" * (8 + len(columns) * 8))
+
+for row_num in range(1, max_row + 1):
+    row_data = seating_grid.get(row_num, {})
+    row_str = f" {row_num}  "
+    
+    for col in columns:
+        col_data = row_data.get(col, {})
+        left = col_data.get('L')
+        right = col_data.get('R')
+        
+        if left and right:
+            row_str += f"| {left['rollnum']}/{right['rollnum']} "
+        elif left:
+            row_str += f"| {left['rollnum']}  "
+        elif right:
+            row_str += f"|  {right['rollnum']} "
+        else:
+            row_str += f"|  --  "
+    
+    print(row_str + "|")
+
+print()
+print("DETAILED STUDENT LIST - DATE: 24-04-2023")
+print("-" * 100)
+print(f"{'Seat ID':<12} | {'Roll No':<12} | {'Name':<25} | {'Subject':<30}")
+print("-" * 100)
+
+for student in sample_students:
+    for seat in student.get('seatnum', []):
+        if seat.get('date') == date_filter:
+            print(f"{seat.get('seatnum'):<12} | {student.get('rollnum'):<12} | {student.get('name'):<25} | {seat.get('subject'):<30}")
+
+print()
+print("=" * 100)
+print("FEATURES IN TEACHER DASHBOARD:")
+print("=" * 100)
+print("""
+1. SEATING TABLE
+   - Displays rows (1-8+) and columns (A, B, C, D, E)
+   - Shows student roll numbers in left/right seat pairs
+   - Color-coded: Left seats (blue), Right seats (yellow)
+
+2. DATE SELECTION
+   - Dropdown and Prev/Next buttons to switch exam dates
+   - Shows only one date at a time
+
+3. SUBJECTS DISPLAY
+   - Shows 2-3 subjects per hall for selected date
+   - Subject cards with icons
+
+4. EXPORT & DEBUG
+   - CSV export button for hall seating
+   - JSON debug endpoint (/teacher/hall_debug)
+
+5. DETAILED LIST TABLE
+   - Full student info below seating grid
+   - Columns: Seat ID, Roll No, Name, Year, Subject, Column, Row, Side
+""")
+
+print("=" * 100)
+print("APP WORKING FLOW:")
+print("=" * 100)
+print("""
+ADMIN:
+1. Upload student data (CSV/Excel)
+2. Upload timetable with exam dates and subjects
+3. Select classes/halls
+4. Generate seating arrangement
+
+TEACHER:
+1. Login with credentials
+2. View assigned hall
+3. Switch exam dates using dropdown/navigation
+4. View seating arrangement table
+5. Export seating as CSV
+
+STUDENT:
+1. Login with roll number
+2. View earliest exam date
+3. See seat assignment, classroom, and subject
+4. Can view other exam dates if multiple
+""")
+
+print("=" * 100)

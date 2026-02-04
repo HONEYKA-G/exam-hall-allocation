@@ -1,4 +1,4 @@
-from flask import Flask, flash, render_template, request, redirect, url_for, jsonify, session
+from flask import Flask, flash, render_template, request, redirect, url_for, jsonify, session, Response
 from markupsafe import Markup
 
 from datetime import datetime
@@ -116,7 +116,17 @@ def student_login():
         
         if student_data is not None:
             seatnum = student_data.get('seatnum')
-            return render_template('studentpage.html', roll_num=roll, seat_num=seatnum)
+            # Get the first (earliest) exam date for the student
+            earliest_date = None
+            if isinstance(seatnum, list) and len(seatnum) > 0:
+                dates_list = []
+                for seat in seatnum:
+                    if isinstance(seat, dict) and seat.get('date'):
+                        dates_list.append(seat.get('date'))
+                if dates_list:
+                    earliest_date = sorted(dates_list)[0]
+            
+            return render_template('studentpage.html', roll_num=roll, seat_num=seatnum, exam_date=earliest_date)
         else:
             flash('Roll number not found', 'login-error')
             return redirect(url_for('student_login'))
@@ -169,7 +179,7 @@ def teacher_login():
         return render_template('teacherlogin.html')
 
 
-# Teacher Dashboard - Show Subjects and Students
+# Teacher Dashboard - Show Invigilation Hall and Students
 @app.route('/teacher/dashboard', methods=['GET', 'POST'])
 def teacher_dashboard():
     if 'teacher_username' not in session:
@@ -183,40 +193,192 @@ def teacher_dashboard():
             flash('Teacher not found', 'error')
             return redirect(url_for('teacher_login'))
         
+        # Get invigilation hall and teacher display name
+        invigilation_hall = str(teacher.get('invigilation_hall', 'Not Assigned'))
         teacher_name = str(teacher.get('name', session['teacher_username']))
         
-        # Get all unique subjects from student data
-        all_subjects = stucollections.distinct('subject')
-        all_subjects = [str(s) for s in all_subjects if s]  # Convert to strings, remove None
-        all_subjects = sorted(set(all_subjects))  # Remove duplicates and sort
+        # Get students who have a seat entry for this hall (seatnum is an array of dicts)
+        students_in_hall = []
+        if invigilation_hall and invigilation_hall != 'Not Assigned':
+            # Query student docs where any seat entry has classroom equal to invigilation_hall
+            students_in_hall = list(stucollections.find({'seatnum.classroom': invigilation_hall}))
         
-        # Get selected subject
-        selected_subject = str(request.args.get('subject', '')).strip()
+        # Extract unique dates for this hall
+        available_dates = set()
+        for student in students_in_hall:
+            seatnums = student.get('seatnum', [])
+            if isinstance(seatnums, list):
+                for seat in seatnums:
+                    if isinstance(seat, dict):
+                        date = seat.get('date')
+                        if date:
+                            available_dates.add(date)
         
-        # Get students for selected subject
-        students = []
-        subject_count = 0
-        if selected_subject and selected_subject != '':
-            students = list(stucollections.find({'subject': selected_subject}))
-            subject_count = len(students)
+        available_dates = sorted(list(available_dates))
         
-        # Get all subjects with student count
-        subject_stats = []
-        for subject in all_subjects:
-            count = stucollections.count_documents({'subject': subject})
-            subject_stats.append({'name': str(subject), 'count': int(count)})
+        # Get selected date from request or use first available date
+        selected_date = request.args.get('date')
+        if not selected_date and available_dates:
+            selected_date = available_dates[0]
         
-        # Get total student count
-        total_students = stucollections.count_documents({})
+        # Process seating data for selected date only
+        processed_students = []
+        conflicts = []
+        for student in students_in_hall:
+            seatnums = student.get('seatnum', [])
+            if isinstance(seatnums, list):
+                for seat in seatnums:
+                    if isinstance(seat, dict) and seat.get('date') == selected_date:
+                        # Skip this student if the same roll number is assigned to a different hall for the same date
+                        try:
+                            other_conflict = stucollections.find_one({
+                                '_id': {'$ne': student.get('_id')},
+                                'rollnum': student.get('rollnum'),
+                                'seatnum': {'$elemMatch': {'date': selected_date, 'classroom': {'$ne': invigilation_hall}}}
+                            })
+                        except Exception:
+                            other_conflict = None
+                        if other_conflict:
+                            conflicts.append({'rollnum': student.get('rollnum'), 'other_classroom': other_conflict.get('seatnum')[0].get('classroom', '') if other_conflict.get('seatnum') else ''})
+                            continue
+
+                        student_data = {
+                            'rollnum': student.get('rollnum'),
+                            'name': student.get('name'),
+                            'Year': student.get('Year'),
+                                'seatnum': seat.get('seatnum', '-'),
+                                'seat_label': seat.get('seat_label', (seat.get('column_letter','') + ( 'R' if seat.get('side')=='Right' else 'L'))),
+                            'section': seat.get('section', '-'),
+                            'bench_number': seat.get('bench_number', '-'),
+                            'column_letter': seat.get('column_letter', '-'),
+                            'side': seat.get('side', '-'),
+                            'date': seat.get('date', '-'),
+                                'branch': student.get('branch', ''),
+                                'classroom': seat.get('classroom', invigilation_hall),
+                            'subject': seat.get('subject', '-')
+                        }
+                        processed_students.append(student_data)
+        
+        # Get ONLY subjects that have students in THIS hall for selected date
+        subjects_in_hall = set()
+        for student in processed_students:
+            subject = student.get('subject')
+            if subject:
+                subjects_in_hall.add(str(subject))
+        subjects_in_hall = sorted(list(subjects_in_hall))
+        
+        # Build subject entries grouped by subject code with register numbers and counts
+        subject_map = {}
+        for s in processed_students:
+            subj = s.get('subject') or 'Unknown'
+            subj_key = str(subj)
+            if subj_key not in subject_map:
+                subject_map[subj_key] = {
+                    'subject': subj_key,
+                    'year': s.get('Year', ''),
+                    'deg': 'UG',
+                    'dept': s.get('branch', '') if s.get('branch') else '',
+                    'registers': []
+                }
+            # add rollnum
+            if s.get('rollnum') is not None:
+                subject_map[subj_key]['registers'].append(str(s.get('rollnum')))
+
+        # Helper function to format register numbers as range
+        def format_register_range(rollnums):
+            """Convert list of roll numbers to range format like '99990001-020'"""
+            if not rollnums:
+                return '-'
+            try:
+                nums = sorted([int(r) for r in rollnums])
+                if len(nums) == 0:
+                    return '-'
+                if len(nums) == 1:
+                    return str(nums[0])
+                # Format as "first-last" where last shows only the suffix
+                first = str(nums[0])
+                last = str(nums[-1])
+                # Show range as startnum-endnum (or just the tail if same prefix)
+                return f"{first}-{last[-3:]}"  # shows last 3 digits of end
+            except Exception:
+                return ', '.join(str(r) for r in rollnums)
+        
+        # Convert map to list of entries
+        subject_entries = []
+        for subj_key, info in subject_map.items():
+            registers = info.get('registers', [])
+            entry = {
+                'subject': info['subject'],
+                'year': info.get('year', ''),
+                'deg': info.get('deg', ''),
+                'dept': info.get('dept', ''),
+                'registers': registers,
+                'registers_range': format_register_range(registers),
+                'count': len(registers)
+            }
+            subject_entries.append(entry)
+        # sort entries by subject name/code
+        subject_entries = sorted(subject_entries, key=lambda x: x['subject'])
+
+        # Build seating grid server-side for template rendering
+        seating_grid = {}
+        columns_set = set()
+        max_row = 0
+        for s in processed_students:
+            try:
+                row = int(s.get('bench_number') or 0)
+            except Exception:
+                row = 0
+            col = s.get('column_letter') or ''
+            side = 'R' if str(s.get('side')).lower().startswith('r') else 'L'
+            columns_set.add(col)
+            if row > max_row:
+                max_row = row
+            if row not in seating_grid:
+                seating_grid[row] = {}
+            if col not in seating_grid[row]:
+                seating_grid[row][col] = {}
+            seating_grid[row][col][side] = {
+                'rollnum': s.get('rollnum'),
+                'name': s.get('name'),
+                'subject': s.get('subject'),
+                'Year': s.get('Year'),
+                'branch': s.get('branch',''),
+                'seatnum': s.get('seatnum',''),
+                'classroom': s.get('classroom','')
+            }
+        columns_set = sorted([c for c in columns_set if c])
+        
+        # Get next date index
+        next_date = None
+        prev_date = None
+        if selected_date and available_dates:
+            current_idx = available_dates.index(selected_date) if selected_date in available_dates else 0
+            if current_idx < len(available_dates) - 1:
+                next_date = available_dates[current_idx + 1]
+            if current_idx > 0:
+                prev_date = available_dates[current_idx - 1]
+        
+        total_students_in_hall = len(processed_students)
+        total_subjects_in_hall = len(subjects_in_hall)
+        if conflicts:
+            flash(f"Excluded {len(conflicts)} duplicate roll no(s) assigned to other halls for {selected_date}.", 'error')
         
         return render_template('teacherdashboard.html', 
                              teacher_name=teacher_name,
-                             all_subjects=all_subjects,
-                             subject_stats=subject_stats,
-                             selected_subject=selected_subject,
-                             students=students,
-                             subject_count=subject_count,
-                             total_students=total_students)
+                             invigilation_hall=invigilation_hall,
+                             students_in_hall=processed_students,
+                             total_students_in_hall=total_students_in_hall,
+                             total_subjects=total_subjects_in_hall,
+                             subjects_list=subjects_in_hall,
+                             subject_entries=subject_entries,
+                             seating_grid=seating_grid,
+                             columns_set=columns_set,
+                             max_row=max_row,
+                             available_dates=available_dates,
+                             selected_date=selected_date,
+                             next_date=next_date,
+                             prev_date=prev_date)
     except Exception as e:
         flash(f'Error: {str(e)}', 'error')
         return redirect(url_for('teacher_login'))
@@ -238,6 +400,108 @@ def teacher_view_student(roll_num):
         return redirect(url_for('teacher_dashboard'))
 
 
+@app.route('/teacher/hall_debug', methods=['GET'])
+def teacher_hall_debug():
+    # Debug route: returns processed_students JSON for the logged-in teacher and optional date
+    if 'teacher_username' not in session:
+        return jsonify({'error': 'login required'}), 401
+    teacher = techercollections.find_one({'username': session['teacher_username']})
+    if not teacher:
+        return jsonify({'error': 'teacher not found'}), 404
+    invigilation_hall = str(teacher.get('invigilation_hall', 'Not Assigned'))
+    if invigilation_hall == 'Not Assigned':
+        return jsonify({'error': 'no hall assigned'}), 400
+    selected_date = request.args.get('date')
+    students_in_hall = list(stucollections.find({'seatnum.classroom': invigilation_hall}))
+    # collect available dates
+    available_dates = set()
+    for student in students_in_hall:
+        for seat in student.get('seatnum', []) or []:
+            if isinstance(seat, dict) and seat.get('date'):
+                available_dates.add(seat.get('date'))
+    available_dates = sorted(list(available_dates))
+    if not selected_date and available_dates:
+        selected_date = available_dates[0]
+    processed_students = []
+    for student in students_in_hall:
+        for seat in student.get('seatnum', []) or []:
+            if isinstance(seat, dict) and seat.get('date') == selected_date:
+                # ensure this roll isn't assigned to some other hall for the same date
+                try:
+                    other_conflict = stucollections.find_one({
+                        '_id': {'$ne': student.get('_id')},
+                        'rollnum': student.get('rollnum'),
+                        'seatnum': {'$elemMatch': {'date': selected_date, 'classroom': {'$ne': invigilation_hall}}}
+                    })
+                except Exception:
+                    other_conflict = None
+                if other_conflict:
+                    # skip duplicate roll assigned elsewhere
+                    continue
+                processed_students.append({
+                    'rollnum': student.get('rollnum'),
+                    'name': student.get('name'),
+                    'Year': student.get('Year'),
+                    'seat': seat
+                })
+    return jsonify({'hall': invigilation_hall, 'selected_date': selected_date, 'available_dates': available_dates, 'students': processed_students})
+
+
+@app.route('/teacher/export_csv', methods=['GET'])
+def teacher_export_csv():
+    if 'teacher_username' not in session:
+        flash('Please login first', 'login-error')
+        return redirect(url_for('teacher_login'))
+    teacher = techercollections.find_one({'username': session['teacher_username']})
+    if not teacher:
+        flash('Teacher not found', 'error')
+        return redirect(url_for('teacher_login'))
+    invigilation_hall = str(teacher.get('invigilation_hall', 'Not Assigned'))
+    if invigilation_hall == 'Not Assigned':
+        flash('No hall assigned', 'error')
+        return redirect(url_for('teacher_dashboard'))
+
+    selected_date = request.args.get('date')
+    students_in_hall = list(stucollections.find({'seatnum.classroom': invigilation_hall}))
+    # determine available dates
+    available_dates = set()
+    for student in students_in_hall:
+        for seat in student.get('seatnum', []) or []:
+            if isinstance(seat, dict) and seat.get('date'):
+                available_dates.add(seat.get('date'))
+    available_dates = sorted(list(available_dates))
+    if not selected_date and available_dates:
+        selected_date = available_dates[0]
+
+    # build CSV
+    import csv
+    from io import StringIO
+
+    si = StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['SeatID','RollNo','Name','Year','Subject','Column','Bench','Side','Classroom','Date'])
+    for student in students_in_hall:
+        for seat in student.get('seatnum', []) or []:
+            if isinstance(seat, dict) and seat.get('date') == selected_date:
+                # Skip if this roll is assigned in another hall for same date
+                try:
+                    other_conflict = stucollections.find_one({
+                        '_id': {'$ne': student.get('_id')},
+                        'rollnum': student.get('rollnum'),
+                        'seatnum': {'$elemMatch': {'date': selected_date, 'classroom': {'$ne': invigilation_hall}}}
+                    })
+                except Exception:
+                    other_conflict = None
+                if other_conflict:
+                    continue
+
+                seatid = seat.get('seatnum') or (seat.get('column_letter','') + ( 'R' if seat.get('side')=='Right' else 'L') + str(seat.get('bench_number','')))
+                cw.writerow([seatid, student.get('rollnum'), student.get('name'), student.get('Year'), seat.get('subject'), seat.get('column_letter'), seat.get('bench_number'), seat.get('side'), seat.get('classroom'), seat.get('date')])
+
+    output = si.getvalue()
+    return Response(output, mimetype='text/csv', headers={"Content-disposition": f"attachment; filename={invigilation_hall.replace(' ','_')}_{selected_date}.csv"})
+
+
 # Teacher Logout
 @app.route('/teacher/logout')
 def teacher_logout():
@@ -245,6 +509,61 @@ def teacher_logout():
     session['teacher_id'] = None
     flash('Logged out successfully!', 'logout-success')
     return redirect(url_for('index'))
+
+
+@app.route('/admin/load_sample', methods=['GET'])
+def admin_load_sample():
+    """Convenience route to insert sample teacher and student seating data for testing/viewing.
+    Inserts a teacher assigned to 'ADM 303' and several students with seat assignments for a sample date.
+    """
+    # Sample date and hall
+    sample_date = '18.11.2025'
+    hall = 'ADM 303'
+
+    # Create or update teacher
+    techercollections.update_one({'username': 'teacher_adm303'}, {'$set': {
+        'username': 'teacher_adm303',
+        'password': 'demo123',
+        'name': 'Demo Teacher',
+        'invigilation_hall': hall
+    }}, upsert=True)
+
+    # Clear any existing sample students with rollnums starting with 999
+    stucollections.delete_many({'rollnum': {'$gte': 99990000}})
+
+    # Build sample students with seat assignments matching AL/AR/BL/BR pattern
+    sample_students = [
+        (99990001, 'STUDENT A', 'FourthYear', 'A', 1, 'Left', 'EC19702'),
+        (99990002, 'STUDENT B', 'FourthYear', 'A', 1, 'Right', 'EC19702'),
+        (99990003, 'STUDENT C', 'FourthYear', 'B', 1, 'Left', 'IT19741'),
+        (99990004, 'STUDENT D', 'FourthYear', 'B', 1, 'Right', 'IT19741'),
+        (99990005, 'STUDENT E', 'FourthYear', 'A', 2, 'Left', 'EC19702'),
+        (99990006, 'STUDENT F', 'FourthYear', 'A', 2, 'Right', 'EC19702'),
+    ]
+
+    for roll, name, year, col, bench, side, subj in sample_students:
+        seat_label = f"{col}{'L' if side=='Left' else 'R'}{bench}"
+        doc = {
+            'rollnum': int(roll),
+            'name': name,
+            'Year': year,
+            'branch': 'ECE',
+            'seatnum': [
+                {
+                    'date': sample_date,
+                    'seatnum': seat_label,
+                    'seat_label': seat_label[:2],
+                    'bench_number': bench,
+                    'column_letter': col,
+                    'side': side,
+                    'classroom': hall,
+                    'subject': subj
+                }
+            ]
+        }
+        stucollections.replace_one({'rollnum': int(roll)}, doc, upsert=True)
+
+    return f"Inserted sample teacher and {len(sample_students)} students for hall {hall} on {sample_date}.\n\nTeacher login: teacher_adm303 / demo123\nVisit /teacher/login to sign in."
 
 
 @app.route('/class', methods=['GET'])
@@ -718,34 +1037,28 @@ def details():
 def seating():
     global filled
     
-    # Check if 'stuarrange.txt' file doesn't exist, flash an error message and redirect to 'admin' route
     if not os.path.exists('static/stuarrange.txt'):
         flash('Choose Class', 'error')
         return redirect(url_for('admin'))
     
     if filled:
         with open('static/stuarrange.txt', 'r') as stufiles:
-            stulist = json.load(stufiles)  # Load the JSON data from the file
+            stulist = json.load(stufiles)
         flash('Already generated', 'error')
         return redirect(url_for('admin'))
     
     else:
-        #reset data to avoid redundancy
         stucollections.update_many({}, {"$unset": {"seatnum": ""}})
         
         for date in dates:
             global listyy
             
-            #all date , subjects and students
             listyy = []
-            #rollnumbers of each subject
             details = stucollections.aggregate(
                 [{"$group": {"_id": "$subject", "ro": {"$push": "$rollnum"}}}])
             for i in details:
                 listyy.append(i)
             
-            #sorting rollnumber by date of exam.
-            #current date subjects and students
             listy = []
             for item in listyy:
                 for item1 in item["_id"]:
@@ -756,118 +1069,120 @@ def seating():
                         
             with open('static/stuarrange.txt', 'r') as stufiles:
                 stulist = json.load(stufiles)
-             
-                
+            
             for i in stulist:
                 i["a"] = []
                 i["b"] = []
+                i["c"] = []
+                i["d"] = []
                 class_name = i.get("class_name")
+                
                 if len(listy) == 0:
                     break
                 
-                # Calculate the number of seats in 'a' ,'b'
-                a = math.ceil(int(i["column"])/2)*int(i["rows"])
-                b = (int(i["column"])*int(i["rows"]))-a
+                total_seats = int(i["column"]) * int(i["rows"])
+                seats_per_section = total_seats // 4
+                remaining_seats = total_seats % 4
                 
-                #selecting the subject into firstitem
-                firstitem = listy[0]
+                seat_counts = [seats_per_section] * 4
+                for j in range(remaining_seats):
+                    seat_counts[j] += 1
                 
-                #inserts current date's subject
+                sections = ["a", "b", "c", "d"]
                 idlist = []
-                idlist.append(firstitem["_id"])
                 
-                listy.pop(0)
-                
-                # Assign students to seats in category 'a'
-                for j in range(0, a):
-                    #checking if currentsubject students is over and seats and students of other subject exist
-                    if len(firstitem["ro"]) == 0:
-                        
-                        #check if students list is empty
-                        if len(listy) == 0:
-                            break
-                        
-                        #takes next subject into firstitem
-                        firstitem = listy[0]
-                        
-                        #contains currents date's(firstitem selected) subject
-                        idlist.append(firstitem["_id"])
-                        listy.pop(0)
-                        
-                    i["a"].append(firstitem["ro"][0])
-                    #assigning seat
-                    
-                    seatinfo = [
-                        {"date": date, "seatnum": "a" + str(len(i["a"])), "classroom": class_name, "subject": firstitem["_id"]["subject"]}]
-                    stucollections.update_one({"rollnum": firstitem["ro"][0]}, {
-                        "$addToSet": {"seatnum": seatinfo}})
-                    
-                    #remove student after seating from the current subject
-                    firstitem["ro"].pop(0)
-                    
-                #a section is over while students are remaining
-                #then remaining students is appended back to the listy
-                if len(firstitem["ro"]) != 0:
-                    listy.append(firstitem)
-                
-                # check if students list is empty
                 if len(listy) == 0:
-                    break
-                
-                
-                # takes next subject into firstitem since a has been filled. And different subject should be taken
+                    continue
+                    
                 firstitem = listy[0]
+                idlist.append(firstitem["_id"])
                 listy.pop(0)
                 
-                # Assign students to seats in category 'b'
-                for k in range(0, b):
-                    if len(firstitem["ro"]) == 0:
+                # Calculate classroom layout parameters
+                num_columns = int(i["column"])
+                num_rows = int(i["rows"])
+                benches_per_column = num_rows
+                columns_list = ["A", "B", "C", "D", "E"][:num_columns]
+                
+                for section_idx, section_name in enumerate(sections):
+                    section_seat_count = seat_counts[section_idx]
+                    
+                    for seat_num in range(section_seat_count):
+                        if not firstitem or len(firstitem["ro"]) == 0:
+                            if len(listy) == 0:
+                                break
+                            
+                            firstitem = listy[0]
+                            idlist.append(firstitem["_id"])
+                            listy.pop(0)
                         
-                        # check if students list is empty
-                        if len(listy) == 0:
+                        if not firstitem or len(firstitem["ro"]) == 0:
                             break
                         
-                        # takes next subject into firstitem since there are no students left for that subject(firstitem)
+                        i[section_name].append(firstitem["ro"][0])
+                        
+                        # Calculate classroom grid position based on index in section
+                        idx_in_section = len(i[section_name])
+                        # bench_number: each bench holds two seats (Left then Right)
+                        bench_num = ((idx_in_section - 1) // 2) + 1
+                        # side alternates: odd index -> Left, even index -> Right
+                        seat_side = "Left" if (idx_in_section % 2 == 1) else "Right"
+                        
+                        # Map section (a,b,c,d) to column positions
+                        section_map = {"a": 0, "b": 1, "c": 2, "d": 3}
+                        col_idx = section_map.get(section_name, 0)
+                        col_letter = columns_list[col_idx] if col_idx < len(columns_list) else "A"
+                        
+                        seatinfo = [{
+                            "date": date,
+                            # seat label like AR/AL/BR/BL depending on column and side
+                            "seat_label": col_letter + ("R" if seat_side == "Right" else "L"),
+                            "seatnum": col_letter + ("R" if seat_side == "Right" else "L") + str(bench_num),
+                            "section": section_name,
+                            "bench_number": bench_num,
+                            "column_letter": col_letter,
+                            "side": seat_side,
+                            "classroom": class_name,
+                            "subject": firstitem["_id"]["subject"]
+                        }]
+                        
+                        stucollections.update_one(
+                            {"rollnum": firstitem["ro"][0]},
+                            {"$addToSet": {"seatnum": seatinfo}}
+                        )
+                        
+                        firstitem["ro"].pop(0)
+                    
+                    if firstitem and len(firstitem["ro"]) != 0:
+                        listy.append(firstitem)
+                    
+                    if len(listy) == 0:
+                        break
+                    
+                    if listy:
                         firstitem = listy[0]
                         listy.pop(0)
-                    
-                    
-                    #check if a has the same subject as b
-                    if firstitem["_id"] in idlist:
-                        break
-                    #this is why some rows are left in b column
-                    
-                    i["b"].append(firstitem["ro"][0])
-                    seatinfo = [
-                        {"date": date, "seatnum": "b" + str(len(i["b"])), "classroom": class_name, "subject": firstitem["_id"]["subject"]}]
-                    stucollections.update_one({"rollnum": firstitem["ro"][0]}, {
-                        "$addToSet": {"seatnum": seatinfo}})
-                    firstitem["ro"].pop(0)
-                    
-                # b section is over while students are remaining
-                # then remaining students is appended back to the listy
-                if len(firstitem["ro"]) != 0:
-                    listy.append(firstitem)
-                    
+                    else:
+                        firstitem = None
+            
             newlist = list(stulist)
             
-            stunum=0
+            stunum = 0
             for listitem in listy:
                 stunum += len(listitem["ro"])
-            if stunum> 0:
-                    flash('Warning: Number of items exceeds total capacity.', 'danger')
-                    return render_template('classavailable.html',stunum=stunum)
             
-            # Open 'stuarrange<date>.txt' file in write mode
-            with open('static/stuarrange'+date+'.txt', 'w') as f:
+            if stunum > 0:
+                flash('Warning: Number of items exceeds total capacity.', 'danger')
+                return render_template('classavailable.html', stunum=stunum)
+            
+            with open('static/stuarrange' + date + '.txt', 'w') as f:
                 json.dump(newlist, f, indent=4)
-            filled = True  # Set 'filled' to True to indicate that seating is generated
-
-
+            
+            filled = True
+        
         flash('Generated', 'success')
         return render_template("adminhome.html")
-
-
+    
 @app.route('/viewseating', methods=['GET'])
 def viewseating():
     global filled
@@ -955,7 +1270,8 @@ def reset_dates():
 
 # main function
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Disable the reloader to avoid Windows Watchdog socket errors during development
+    app.run(debug=True, use_reloader=False)
     
 
 

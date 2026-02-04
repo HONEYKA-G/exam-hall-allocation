@@ -257,32 +257,41 @@
       
       function table(name) {
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'viewseating/' + name, true);
-        xhr.onload = function() {
-          if (xhr.status == 200) {
-            var out = '';
-            var json = JSON.parse(xhr.responseText);
-            for (var i = 0; i < json.length; i++) {
-              var classData = json[i];
-              if (classData.a || classData.b) {
-                var maxRows = Math.max(classData.a ? classData.a.length : 0, classData.b ? classData.b.length : 0);
-                out += '<table class="table table-bordered table-striped">';
-                out += '<thead><tr><th colspan="4" class="text-center"><h5>' + classData.class_name + '</h5></th></tr>';
-                out += '<tr><th>Seat No</th><th>Roll No</th><th>Seat No</th><th>Roll No</th></tr></thead>';
-                out += '<tbody>';
-                for (var z = 0; z < maxRows; z++) {
-                  var aData = classData.a && z < classData.a.length ? classData.a[z] : '-';
-                  var bData = classData.b && z < classData.b.length ? classData.b[z] : '-';
-                  out += '<tr><td>A' + (z + 1) + '</td><td>' + aData + '</td>';
-                  out += '<td>B' + (z + 1) + '</td><td>' + bData + '</td></tr>';
-                }
-                out += '</tbody></table>';
-              }
-            }
-            tablesContainer.innerHTML = out;
-          }
-        };
-        xhr.send();
+xhr.open('GET', 'viewseating/' + name, true);
+xhr.onload = function() {
+  if (xhr.status == 200) {
+    var out = '';
+    var json = JSON.parse(xhr.responseText);
+    for (var i = 0; i < json.length; i++) {
+      var classData = json[i];
+      if (classData.a || classData.b || classData.c || classData.d) {
+        var maxRows = Math.max(
+          classData.a ? classData.a.length : 0,
+          classData.b ? classData.b.length : 0,
+          classData.c ? classData.c.length : 0,
+          classData.d ? classData.d.length : 0
+        );
+        out += '<table class="table table-bordered table-striped">';
+        out += '<thead><tr><th colspan="8" class="text-center"><h5>' + classData.class_name + '</h5></th></tr>';
+        out += '<tr><th>A</th><th>Roll</th><th>B</th><th>Roll</th><th>C</th><th>Roll</th><th>D</th><th>Roll</th></tr></thead>';
+        out += '<tbody>';
+        for (var z = 0; z < maxRows; z++) {
+          var aData = classData.a && z < classData.a.length ? classData.a[z] : '-';
+          var bData = classData.b && z < classData.b.length ? classData.b[z] : '-';
+          var cData = classData.c && z < classData.c.length ? classData.c[z] : '-';
+          var dData = classData.d && z < classData.d.length ? classData.d[z] : '-';
+          out += '<tr><td>A' + (z + 1) + '</td><td>' + aData + '</td>';
+          out += '<td>B' + (z + 1) + '</td><td>' + bData + '</td>';
+          out += '<td>C' + (z + 1) + '</td><td>' + cData + '</td>';
+          out += '<td>D' + (z + 1) + '</td><td>' + dData + '</td></tr>';
+        }
+        out += '</tbody></table>';
+      }
+    }
+    tablesContainer.innerHTML = out;
+  }
+};
+xhr.send();
       }
     </script>
   </body>

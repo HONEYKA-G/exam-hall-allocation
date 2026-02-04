@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard</title>
+    <title>Teacher Invigilation Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -27,46 +27,40 @@
             color: #667eea;
             margin-right: 15px;
         }
-        .content-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-        .subject-btn {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: #333;
-            display: block;
-            margin-bottom: 15px;
-        }
-        .subject-btn:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-            border-color: #667eea;
-            color: #333;
-        }
-        .subject-btn.active {
+        .hall-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: #667eea;
             color: white;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
         }
-        .subject-btn h5 { margin-bottom: 10px; font-weight: 600; }
-        .subject-btn .count { font-size: 24px; font-weight: bold; }
+        .hall-card h2 {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .hall-card p {
+            font-size: 18px;
+            margin: 10px 0 0 0;
+        }
         .table-card {
             background: white;
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        .table-card table { margin-bottom: 0; }
-        .table-card tbody tr:hover { background-color: #f5f5f5; }
+        .table-card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .table-card table {
+            margin-bottom: 0;
+        }
+        .table-card tbody tr:hover {
+            background-color: #f5f5f5;
+        }
         .btn-view {
             background-color: #667eea;
             color: white;
@@ -75,7 +69,24 @@
             border-radius: 5px;
             font-size: 12px;
         }
-        .btn-view:hover { background-color: #764ba2; color: white; }
+        .btn-view:hover {
+            background-color: #764ba2;
+            color: white;
+        }
+        .no-hall {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #333;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .no-hall i {
+            font-size: 48px;
+            color: #ffc107;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -83,7 +94,7 @@
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">
-                <i class="fas fa-graduation-cap"></i> Teacher Dashboard
+                <i class="fas fa-graduation-cap"></i> Teacher Invigilation Dashboard
             </span>
             <div>
                 <span class="text-white me-3">
@@ -100,7 +111,7 @@
         <!-- Dashboard Header -->
         <div class="dashboard-header">
             <h1><i class="fas fa-chalkboard-user"></i> Welcome, {{ teacher_name }}!</h1>
-            <p>College Exam Subjects & Students Management</p>
+            <p>Your Invigilation Hall Assignment & Seating Arrangement</p>
         </div>
 
         <!-- Messages -->
@@ -119,10 +130,16 @@
         <div class="row mb-4">
             <div class="col-md-4">
                 <div class="stat-card">
-                    <i class="fas fa-book"></i>
+                    <i class="fas fa-door-open"></i>
                     <div class="d-inline-block">
-                        <h5>Total Subjects</h5>
-                        <p class="mb-0" style="font-size: 24px; font-weight: bold;">{{ all_subjects|length }}</p>
+                        <h5>Your Hall</h5>
+                        <p class="mb-0" style="font-size: 24px; font-weight: bold; color: #667eea;">
+                            {% if invigilation_hall == 'Not Assigned' %}
+                                Not Assigned
+                            {% else %}
+                                {{ invigilation_hall }}
+                            {% endif %}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -130,89 +147,309 @@
                 <div class="stat-card">
                     <i class="fas fa-users"></i>
                     <div class="d-inline-block">
-                        <h5>Selected Students</h5>
-                        <p class="mb-0" style="font-size: 24px; font-weight: bold;">{{ subject_count }}</p>
+                        <h5>Students in Hall</h5>
+                        <p class="mb-0" style="font-size: 24px; font-weight: bold;">{{ total_students_in_hall }}</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stat-card">
-                    <i class="fas fa-graduation-cap"></i>
+                    <i class="fas fa-book"></i>
                     <div class="d-inline-block">
-                        <h5>Total Students</h5>
-                        <p class="mb-0" style="font-size: 24px; font-weight: bold;">{{ total_students }}</p>
+                        <h5>Subjects with Students</h5>
+                        <p class="mb-0" style="font-size: 24px; font-weight: bold;">{{ total_subjects }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Subjects -->
-        <div class="content-card">
-            <h3 class="mb-4"><i class="fas fa-book-open"></i> Select a Subject</h3>
-            <div class="row">
-                {% for item in subject_stats %}
-                    <div class="col-md-4">
-                        <a href="{{ url_for('teacher_dashboard', subject=item.name) }}" class="subject-btn">
-                            <h5><i class="fas fa-chalkboard"></i> {{ item.name }}</h5>
-                            <p class="count mb-0">{{ item.count }} Students</p>
+        <!-- Hall Assignment -->
+        {% if invigilation_hall != 'Not Assigned' %}
+            <div class="hall-card">
+                <i class="fas fa-building" style="font-size: 36px; margin-bottom: 15px;"></i>
+                <h2>{{ invigilation_hall }}</h2>
+                <p><i class="fas fa-info-circle"></i> Your Assigned Invigilation Hall</p>
+            </div>
+
+            <!-- Date Navigation -->
+            {% if available_dates %}
+                <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+                    <h4 style="color: #667eea; margin-bottom: 15px;"><i class="fas fa-calendar"></i> Exam Date</h4>
+                    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                        {% if prev_date %}
+                            <a href="{{ url_for('teacher_dashboard', date=prev_date) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-chevron-left"></i> Previous Date
+                            </a>
+                        {% else %}
+                            <button class="btn btn-outline-primary btn-sm" disabled>
+                                <i class="fas fa-chevron-left"></i> Previous Date
+                            </button>
+                        {% endif %}
+                        
+                        <div style="flex: 1; text-align: center;">
+                            <select class="form-select form-select-sm" style="max-width: 200px; margin: 0 auto;" onchange="location.href='{{ url_for('teacher_dashboard') }}?date=' + this.value;">
+                                {% for date in available_dates %}
+                                    <option value="{{ date }}" {% if date == selected_date %}selected{% endif %}>
+                                        {{ date }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        {% if next_date %}
+                            <a href="{{ url_for('teacher_dashboard', date=next_date) }}" class="btn btn-outline-primary btn-sm">
+                                Next Date <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% else %}
+                            <button class="btn btn-outline-primary btn-sm" disabled>
+                                Next Date <i class="fas fa-chevron-right"></i>
+                            </button>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('teacher_export_csv', date=selected_date) }}" class="btn btn-success btn-sm" style="margin-left: 10px;">
+                            <i class="fas fa-file-csv"></i> Export CSV
                         </a>
                     </div>
-                {% else %}
-                    <div class="alert alert-info w-100">
-                        <i class="fas fa-info-circle"></i> No subjects available yet.
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+                </div>
+            {% endif %}
 
-        <!-- Students Table -->
-        {% if selected_subject %}
-            <div class="table-card">
-                <h3 class="mb-4"><i class="fas fa-list"></i> Students - {{ selected_subject }}</h3>
-                {% if students %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead style="background-color: #667eea; color: white;">
-                                <tr>
-                                    <th>Roll No.</th>
-                                    <th>Name</th>
-                                    <th>Class</th>
-                                    <th>Year</th>
-                                    <th>Seat No.</th>
-                                    <th>Classroom</th>
-                                    <th>Action</th>
+            <!-- Subjects in this Hall for Selected Date -->
+            {% if subjects_list %}
+                <div class="table-card" style="margin-bottom: 30px;">
+                    <h3><i class="fas fa-book-open"></i> Subjects - {{ selected_date }}</h3>
+                    <div class="row" style="margin-top: 20px;">
+                        {% for subject in subjects_list %}
+                            <div class="col-md-4 mb-3">
+                                <div style="background: #f0f4ff; border-left: 4px solid #667eea; padding: 15px; border-radius: 5px;">
+                                    <p style="margin: 0; color: #667eea; font-weight: 600;"><i class="fas fa-chalkboard"></i> {{ subject }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Hall Plan Table (Excel-like) - Single Row per Subject -->
+            {% if subject_entries and subject_entries|length > 0 %}
+                <div class="table-card" style="margin-bottom: 30px;">
+                    <h3><i class="fas fa-file-alt"></i> Hall Plan - {{ invigilation_hall }} ({{ selected_date }})</h3>
+                    <div style="overflow-x: auto; margin-top: 15px;">
+                        <table style="width: 100%; border-collapse: collapse; border: 1px solid #333;">
+                            <thead>
+                                <tr style="background-color:#efefef;">
+                                    <th style="padding:10px; border:1px solid #333; width:50px; font-weight:bold;">S.No.</th>
+                                    <th style="padding:10px; border:1px solid #333; width:80px; font-weight:bold;">Year</th>
+                                    <th style="padding:10px; border:1px solid #333; width:70px; font-weight:bold;">DEG</th>
+                                    <th style="padding:10px; border:1px solid #333; width:80px; font-weight:bold;">DEPT</th>
+                                    <th style="padding:10px; border:1px solid #333; font-weight:bold;">Subject Code</th>
+                                    <th style="padding:10px; border:1px solid #333; font-weight:bold;">Register Nos.</th>
+                                    <th style="padding:10px; border:1px solid #333; width:70px; font-weight:bold;">Count</th>
+                                    <th style="padding:10px; border:1px solid #333; width:100px; font-weight:bold;">Total Count</th>
+                                    <th style="padding:10px; border:1px solid #333; width:100px; font-weight:bold;">Hall No.</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for student in students %}
-                                    <tr>
-                                        <td>{{ student.rollnum }}</td>
-                                        <td>{{ student.name }}</td>
-                                        <td>{{ student.sheet_name }}</td>
-                                        <td>{{ student.Year }}</td>
-                                        <td>{% if student.seatnum %}{{ student.seatnum }}{% else %}-{% endif %}</td>
-                                        <td>{% if student.classroom %}{{ student.classroom }}{% else %}-{% endif %}</td>
-                                        <td>
-                                            <a href="{{ url_for('teacher_view_student', roll_num=student.rollnum) }}" class="btn-view">
-                                                <i class="fas fa-eye"></i> View
-                                            </a>
+                                {% set idx = 0 %}
+                                {% set total_all = 0 %}
+                                {% for entry in subject_entries %}
+                                    {% set idx = idx + 1 %}
+                                    {% set total_all = total_all + entry.count %}
+                                    <tr style="border: 1px solid #333;">
+                                        <td style="padding:10px; border:1px solid #333; text-align:center; font-weight:bold;">{{ idx }}</td>
+                                        <td style="padding:10px; border:1px solid #333; text-align:center;">{{ entry.year }}</td>
+                                        <td style="padding:10px; border:1px solid #333; text-align:center;">{{ entry.deg }}</td>
+                                        <td style="padding:10px; border:1px solid #333; text-align:center;">{{ entry.dept }}</td>
+                                        <td style="padding:10px; border:1px solid #333; text-align:center; font-weight:bold;">{{ entry.subject }}</td>
+                                        <td style="padding:10px; border:1px solid #333;">
+                                            {{ entry.registers_range }}
                                         </td>
+                                        <td style="padding:10px; border:1px solid #333; text-align:center; font-weight:bold;">{{ entry.count }}</td>
+                                        <td style="padding:10px; border:1px solid #333; text-align:center; font-weight:bold;">{{ total_all }}</td>
+                                        <td style="padding:10px; border:1px solid #333; text-align:center; font-weight:bold;">{{ invigilation_hall }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
+                </div>
+            {% endif %}
+
+            <!-- Classroom Layout Seating Arrangement -->
+            <div class="table-card">
+                <h3><i class="fas fa-chair"></i> Seating Arrangement - {{ invigilation_hall }} ({{ selected_date }})</h3>
+                {% if students_in_hall %}
+                    {# Prefer server-provided seating structures; fall back to building them here if absent #}
+                    {% if seating_grid is not defined %}
+                        <!-- Organize data by row (bench) and column -->
+                        {% set seating_grid = {} %}
+                        {% for student in students_in_hall %}
+                            {% set row = student.bench_number %}
+                            {% set col = student.column_letter %}
+                            {% set side = "R" if student.side == "Right" else "L" %}
+                            
+                            {% if row not in seating_grid %}
+                                {% set _ = seating_grid.update({row|string: {}}) %}
+                            {% endif %}
+                            {% if col not in seating_grid[row|string] %}
+                                {% set _ = seating_grid[row|string].update({col: {}}) %}
+                            {% endif %}
+                            {% set _ = seating_grid[row|string][col].update({side: student}) %}
+                        {% endfor %}
+
+                        <!-- Get unique columns in order -->
+                        {% set columns_set = [] %}
+                        {% for student in students_in_hall %}
+                            {% if student.column_letter not in columns_set %}
+                                {% set _ = columns_set.append(student.column_letter) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% set columns_set = columns_set|sort %}
+
+                        <!-- Get max row (bench) number -->
+                        {% set max_row = 0 %}
+                        {% for student in students_in_hall %}
+                            {% if student.bench_number > max_row %}
+                                {% set max_row = student.bench_number %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Classroom Seating Table -->
+                    <div style="overflow-x: auto; margin-top: 20px;">
+                        <table style="width: 100%; border-collapse: collapse; border: 2px solid #333;">
+                            <!-- Header Row -->
+                            <thead>
+                                <tr style="background-color: #667eea; color: white; border: 2px solid #333;">
+                                    <th style="padding: 12px; border: 2px solid #333; font-weight: bold; width: 60px;">ROW</th>
+                                    {% for col in columns_set %}
+                                        <th style="padding: 12px; border: 2px solid #333; font-weight: bold; text-align: center;" colspan="2">
+                                            {{ col }}
+                                        </th>
+                                    {% endfor %}
+                                </tr>
+                                <!-- Sub-header: SR. and ROLL.NO -->
+                                <tr style="background-color: #764ba2; color: white; border: 2px solid #333;">
+                                    <th style="padding: 8px; border: 2px solid #333;"></th>
+                                    {% for col in columns_set %}
+                                        <th style="padding: 8px; border: 2px solid #333; width: 60px; font-size: 12px;">SR.</th>
+                                        <th style="padding: 8px; border: 2px solid #333; width: 100px; font-size: 12px;">ROLL.NO</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <!-- Data Rows -->
+                            <tbody>
+                                {% for row_num in range(1, max_row + 1) %}
+                                    <tr style="border: 2px solid #333;">
+                                        <!-- Row Number -->
+                                        <td style="padding: 12px; border: 2px solid #333; font-weight: bold; background-color: #f0f0f0; text-align: center;">
+                                            {{ row_num }}
+                                        </td>
+                                        <!-- Columns for this Row -->
+                                        {% for col in columns_set %}
+                                            <!-- Left Seat (L) -->
+                                            <td style="padding: 8px; border: 2px solid #333; text-align: center; background-color: #e8f4f8; min-height: 60px;">
+                                                {% if row_num|string in seating_grid and col in seating_grid[row_num|string] and "L" in seating_grid[row_num|string][col] %}
+                                                    {% set left_student = seating_grid[row_num|string][col]["L"] %}
+                                                    <div style="font-size: 11px; font-weight: bold;">{{ col }}L{{ row_num }}</div>
+                                                    <div style="margin-top:6px;">
+                                                        <span style="display:inline-block; padding:6px 10px; border-radius:4px; color:#fff; font-weight:700; background-color:#17a2b8;">{{ left_student.rollnum }}</span>
+                                                    </div>
+                                                    <div style="font-size: 10px; margin-top: 6px;">{{ left_student.name }}</div>
+                                                    <div style="font-size: 10px; color:#555;">{{ left_student.subject }}</div>
+                                                {% else %}
+                                                    <div style="color: #ccc; font-size: 9px;">—</div>
+                                                {% endif %}
+                                            </td>
+                                            <!-- Right Seat (R) -->
+                                            <td style="padding: 8px; border: 2px solid #333; text-align: center; background-color: #fff9e8; min-height: 60px;">
+                                                {% if row_num|string in seating_grid and col in seating_grid[row_num|string] and "R" in seating_grid[row_num|string][col] %}
+                                                    {% set right_student = seating_grid[row_num|string][col]["R"] %}
+                                                    <div style="font-size: 11px; font-weight: bold;">{{ col }}R{{ row_num }}</div>
+                                                    <div style="margin-top:6px;">
+                                                        <span style="display:inline-block; padding:6px 10px; border-radius:4px; color:#333; font-weight:700; background-color:#ffc107;">{{ right_student.rollnum }}</span>
+                                                    </div>
+                                                    <div style="font-size: 10px; margin-top: 6px;">{{ right_student.name }}</div>
+                                                    <div style="font-size: 10px; color:#555;">{{ right_student.subject }}</div>
+                                                {% else %}
+                                                    <div style="color: #ccc; font-size: 9px;">—</div>
+                                                {% endif %}
+                                            </td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Legend -->
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; display: flex; gap: 20px; flex-wrap: wrap;">
+                        <div><span style="display: inline-block; width: 20px; height: 20px; background-color: #e8f4f8; border: 1px solid #333; border-radius: 3px; margin-right: 8px;"></span><strong>Left Seat (L)</strong></div>
+                        <div><span style="display: inline-block; width: 20px; height: 20px; background-color: #fff9e8; border: 1px solid #333; border-radius: 3px; margin-right: 8px;"></span><strong>Right Seat (R)</strong></div>
+                    </div>
+
+                    <!-- Detailed Table View (for subjects and additional info) -->
+                    <div style="margin-top: 30px; border-top: 2px solid #ddd; padding-top: 20px;">
+                        <h5 style="color: #667eea; margin-bottom: 15px;"><i class="fas fa-list"></i> Detailed Student Info</h5>
+                        <div style="overflow-x: auto;">
+                            <table class="seating-table" style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background-color: #667eea; color: white;">
+                                        <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Seat ID</th>
+                                        <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Roll No</th>
+                                        <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Name</th>
+                                        <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Year</th>
+                                        <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Subject</th>
+                                        <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Branch</th>
+                                        <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Classroom</th>
+                                        <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Column</th>
+                                        <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Row/Bench</th>
+                                        <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Side</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {# Iterate processed students to ensure full details for every student #}
+                                    {% for student in students_in_hall %}
+                                        <tr style="border: 1px solid #ddd; {% if student.side and student.side == 'Left' %}background-color: #e8f4f8;{% else %}background-color: #fff9e8;{% endif %}">
+                                            <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold;">
+                                                <span style="background-color: #667eea; color: white; padding: 4px 8px; border-radius: 3px;">{{ student.column_letter }}{{ 'L' if student.side == 'Left' else 'R' }}{{ student.bench_number }}</span>
+                                            </td>
+                                            <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold;">
+                                                <span style="display:inline-block; padding:6px 10px; border-radius:4px; color:#fff; font-weight:700; {% if student.side == 'Left' %}background-color:#17a2b8;{% else %}background-color:#ffc107; color:#333;{% endif %}">{{ student.rollnum }}</span>
+                                            </td>
+                                            <td style="padding: 10px; border: 1px solid #ddd;">{{ student.name }}</td>
+                                            <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">{{ student.Year }}</td>
+                                            <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">
+                                                <span style="background-color: #667eea; color: white; padding: 4px 8px; border-radius: 3px; font-size: 12px;">{{ student.subject }}</span>
+                                            </td>
+                                            <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold;">{{ student.branch }}</td>
+                                            <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold;">{{ student.classroom }}</td>
+                                            <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold;">{{ student.column_letter }}</td>
+                                            <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold;">{{ student.bench_number }}</td>
+                                            <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold;">
+                                                {% if student.side == 'Left' %}
+                                                    <span style="background-color: #17a2b8; color: white; padding: 4px 8px; border-radius: 3px;">Left</span>
+                                                {% else %}
+                                                    <span style="background-color: #ffc107; color: #333; padding: 4px 8px; border-radius: 3px;">Right</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> No students for this subject.
+                    <div class="alert alert-info" style="margin-top: 20px;">
+                        <i class="fas fa-info-circle"></i> <strong>No students assigned for this date.</strong>
+                        <br>Students will appear here once the admin generates the seating arrangement for this date.
                     </div>
                 {% endif %}
             </div>
         {% else %}
-            <div class="content-card">
-                <div class="alert alert-warning" role="alert">
-                    <i class="fas fa-arrow-up"></i> Please select a subject above to view students
-                </div>
+            <div class="no-hall">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>No Hall Assignment</h3>
+                <p>You have not been assigned an invigilation hall. Please contact the administrator.</p>
             </div>
         {% endif %}
     </div>

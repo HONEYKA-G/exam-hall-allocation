@@ -277,30 +277,120 @@
       </div>
       {% if roll_num %}
       <div class="mt-4">
-        <h5>Exam Hall Details:</h5>
-        <table class="table my-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Subject</th>
-              <th>Seat Number</th>
-              <th>Classroom</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for seat in seat_num %}
-            <tr>
-              <td>{{ seat[0]['date'] }}</td>
-              <td>{{ seat[0]['subject'] }}</td>
-              <td>{{ seat[0]['seatnum'] }}</td>
-              <td>{{ seat[0]['classroom'] }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <h5 style="color: #333; font-weight: bold; margin-bottom: 20px;">
+          <i class="fas fa-calendar-check"></i> Your Exam Details
+        </h5>
+        
+        <!-- Get all dates for the student -->
+        {% set all_dates = [] %}
+        {% for seat in seat_num %}
+          {% if seat[0]['date'] not in all_dates %}
+            {% set _ = all_dates.append(seat[0]['date']) %}
+          {% endif %}
+        {% endfor %}
+        
+        <!-- Date Navigation -->
+        {% if all_dates|length > 1 %}
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <label style="margin: 0; font-weight: bold;">Select Exam Date:</label>
+              <select id="dateSelector" class="form-select form-select-sm" style="max-width: 200px;" onchange="updateExamDate(this.value)">
+                {% for date in all_dates|sort %}
+                  <option value="{{ date }}" {% if loop.first %}selected{% endif %}>{{ date }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        {% endif %}
+        
+        <!-- Display info for the first date (or selected date via JavaScript) -->
+        <div id="examDetailsContainer">
+          {% for seat in seat_num %}
+            {% if loop.first or seat[0]['date'] == exam_date %}
+              <table class="table my-table" style="border: 2px solid #667eea;">
+                <thead style="background-color: #667eea; color: white;">
+                  <tr>
+                    <th style="text-align: center;"><i class="fas fa-calendar"></i> Date</th>
+                    <th style="text-align: center;"><i class="fas fa-book"></i> Subject</th>
+                    <th style="text-align: center;"><i class="fas fa-chair"></i> Seat</th>
+                    <th style="text-align: center;"><i class="fas fa-door-open"></i> Classroom</th>
+                    <th style="text-align: center;"><i class="fas fa-columns"></i> Column</th>
+                    <th style="text-align: center;"><i class="fas fa-th"></i> Bench</th>
+                    <th style="text-align: center;"><i class="fas fa-arrows-alt-h"></i> Side</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="background-color: #f0f8ff;">
+                    <td style="text-align: center; font-weight: bold;">{{ seat[0]['date'] }}</td>
+                    <td style="text-align: center;">
+                      <span style="background-color: #667eea; color: white; padding: 5px 10px; border-radius: 4px;">
+                        {{ seat[0]['subject'] }}
+                      </span>
+                    </td>
+                    <td style="text-align: center; font-weight: bold;">
+                      <span style="background-color: #667eea; color: white; padding: 5px 10px; border-radius: 4px;">
+                        {{ seat[0]['seatnum'] }}
+                      </span>
+                    </td>
+                    <td style="text-align: center;">{{ seat[0]['classroom'] }}</td>
+                    <td style="text-align: center; font-weight: bold;">
+                      {{ seat[0].get('column_letter', '-') }}
+                    </td>
+                    <td style="text-align: center; font-weight: bold;">
+                      <span style="background-color: #764ba2; color: white; padding: 4px 8px; border-radius: 3px;">
+                        {{ seat[0].get('bench_number', '-') }}
+                      </span>
+                    </td>
+                    <td style="text-align: center; font-weight: bold;">
+                      {% if seat[0].get('side') == 'Left' %}
+                        <span style="background-color: #17a2b8; color: white; padding: 5px 10px; border-radius: 4px;">
+                          <i class="fas fa-arrow-left"></i> {{ seat[0].get('side', '-') }}
+                        </span>
+                      {% elif seat[0].get('side') == 'Right' %}
+                        <span style="background-color: #ffc107; color: #333; padding: 5px 10px; border-radius: 4px;">
+                          {{ seat[0].get('side', '-') }} <i class="fas fa-arrow-right"></i>
+                        </span>
+                      {% else %}
+                        {{ seat[0].get('side', '-') }}
+                      {% endif %}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              {% break %}
+            {% endif %}
+          {% endfor %}
+        </div>
+        
+        <!-- Additional Info Card -->
+        <div style="background: #e8f4f8; border-left: 4px solid #17a2b8; padding: 15px; border-radius: 5px; margin-top: 20px;">
+          <p style="margin: 0; color: #333;">
+            <i class="fas fa-info-circle" style="color: #17a2b8;"></i> 
+            <strong>Instructions:</strong> Please arrive 15 minutes before the exam time. Carry your ID and admit card. Follow all instructions given by the invigilator.
+          </p>
+        </div>
       </div>
       {% endif %}
     </form>
+
+    <script>
+      function updateExamDate(selectedDate) {
+        // This function would reload the page or update the display
+        // For now, it shows the selected date from the current data
+        const tables = document.querySelectorAll('table');
+        tables.forEach(table => {
+          const rows = table.querySelectorAll('tbody tr');
+          rows.forEach(row => {
+            const dateCell = row.querySelector('td');
+            if (dateCell && dateCell.textContent.includes(selectedDate)) {
+              row.style.display = '';
+            } else {
+              row.style.display = 'none';
+            }
+          });
+        });
+      }
+    </script>
     <!-- Footer -->
 <footer class="page-footer">
   <div class="footer-content">
